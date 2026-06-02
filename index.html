@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryRush V1.4.1 付费引导流程交互演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f0f0f; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        
+        /* 手机框架 */
+        .app-frame { width: 320px; height: 650px; background: #000; border-radius: 36px; border: 8px solid #222; overflow: hidden; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); flex-shrink: 0; }
+        
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar { display: none; }
+        
+        /* 按钮与面板样式 */
+        .btn-red { background: linear-gradient(90deg, #FF3A3A 0%, #E50914 100%); color: white; font-weight: bold; border-radius: 100px; transition: transform 0.1s, opacity 0.2s; cursor: pointer; border: none; }
+        .btn-red:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-gray { background-color: #2A2A2A; color: #9CA3AF; font-weight: bold; border-radius: 100px; cursor: pointer; border: none; transition: background 0.2s; }
+        .btn-gray:active { background-color: #333; }
+        .glass-panel { background: rgba(20, 20, 20, 0.85); backdrop-filter: blur(15px); }
+        
+        /* 动画 */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* 视频加载动画 */
+        .loading-spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #E50914; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex-col md:flex-row gap-8">
+
+    <!-- 演示控制台 (给工程师看的状态栏) -->
+    <div class="w-full md:w-[400px] bg-[#121212] border border-gray-800 rounded-2xl p-6 flex flex-col h-[650px]">
+        <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-red-600">⚙️</span> 演示控制台 & 流程跟踪
+        </h2>
+        <p class="text-xs text-gray-500 mb-4 pb-4 border-b border-gray-800">已接入 24H 倒计时与悬浮球生命周期状态机</p>
+
+        <!-- 状态监控 -->
+        <div class="bg-black border border-gray-800 rounded-xl p-4 mb-4 grid grid-cols-2 gap-4">
+            <div>
+                <div class="text-[10px] text-gray-500">钻石余额 (钻)</div>
+                <div class="text-xl font-bold text-yellow-400 font-mono" id="debug-balance">0</div>
+            </div>
+            <div>
+                <div class="text-[10px] text-gray-500">当前播放集数</div>
+                <div class="text-xl font-bold text-white font-mono" id="debug-episode">未开始</div>
+            </div>
+            <div>
+                <div class="text-[10px] text-gray-500">自动解锁状态</div>
+                <div class="text-sm font-bold text-gray-300" id="debug-autounlock">未设定</div>
+            </div>
+            <div>
+                <div class="text-[10px] text-gray-500">VIP / 订阅状态</div>
+                <div class="text-sm font-bold text-gray-300" id="debug-vip">普通用户</div>
+            </div>
+        </div>
+
+        <!-- 流程图日志跟踪 -->
+        <h3 class="text-sm font-bold text-gray-400 mb-2">当前行为日志：</h3>
+        <div class="flex-1 overflow-y-auto pr-2 space-y-2 text-xs font-mono" id="flow-log">
+            <!-- 日志动态插入 -->
+        </div>
+
+        <!-- 场景控制面板 -->
+        <div class="pt-4 mt-4 border-t border-gray-800 space-y-2">
+            <div class="text-[10px] text-gray-500 mb-1">常规启动测试：</div>
+            <div class="flex gap-2 mb-3">
+                <button onclick="startFlow(false)" class="flex-1 bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 py-1.5 rounded-lg transition text-xs">▶ 正常启动</button>
+                <button onclick="startFlow(true)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-1.5 rounded-lg transition text-xs">🚫 拦截测试</button>
+            </div>
+            
+            <div class="text-[10px] text-gray-500 mb-1">隐性边界条件模拟测试：</div>
+            <button onclick="restartAppSession()" class="w-full bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 border border-blue-900/50 py-2 rounded-lg transition text-xs font-bold">
+                🔄 模拟: 杀掉进程后下次开启App (重置Session)
+            </button>
+            <button onclick="expireOfferTimer()" class="w-full bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-500 border border-yellow-900/50 py-2 rounded-lg transition text-xs font-bold">
+                ⏩ 模拟: 24小时倒计时结束 (特惠过期)
+            </button>
+        </div>
+    </div>
+
+    <!-- 手机屏幕 -->
+    <div class="app-frame relative">
+        
+        <!-- 页面 1: 启动页 Splash -->
+        <div id="view-splash" class="absolute inset-0 bg-black flex justify-center items-center z-10">
+            <div class="w-20 h-20 bg-gradient-to-tr from-red-600 to-orange-400 rounded-3xl flex justify-center items-center text-4xl shadow-[0_0_30px_rgba(229,9,20,0.6)]">▶</div>
+        </div>
+
+        <!-- 页面 2: 大陆 IP 拦截页 -->
+        <div id="view-ip-block" class="absolute inset-0 bg-[#0a0a0a] hidden z-20 flex-col items-center justify-center p-8 text-center">
+            <div class="text-6xl mb-6 opacity-60 filter grayscale">🌍</div>
+            <h2 class="text-lg font-bold text-white mb-2">Service Unavailable</h2>
+            <p class="text-xs text-gray-400 mb-8">StoryRush currently does not provide services in your region.</p>
+            <button onclick="resetDemo()" class="w-full btn-gray py-3 text-sm">Exit App</button>
+        </div>
+
+        <!-- 页面 3: 主播放器界面 (承载视频和各级弹窗) -->
+        <div id="view-player" class="absolute inset-0 bg-black hidden z-10">
+            <!-- 模拟视频画面 -->
+            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop')] bg-cover bg-center opacity-80" id="video-bg"></div>
+            <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/90"></div>
+            
+            <!-- 视频顶部信息 -->
+            <div class="absolute top-12 left-4 right-4 flex justify-between items-center z-10">
+                <span class="text-white text-lg font-bold">❮</span>
+                <div class="flex bg-black/50 rounded-full px-3 py-1 items-center gap-1 border border-white/10 cursor-pointer" onclick="triggerSubscriptionModal()">
+                    <span class="text-[10px] text-gray-300">余额</span>
+                    <span class="text-xs font-bold text-yellow-400" id="ui-balance">0</span>
+                    <span class="text-[10px]">💎 ➕</span>
+                </div>
+            </div>
+
+            <!-- 底部剧集信息 -->
+            <div class="absolute bottom-6 left-4 right-4 z-10">
+                <div class="text-red-500 font-bold text-xs mb-1" id="ui-ep-badge">Episode 1 (Free)</div>
+                <h1 class="text-white font-bold text-lg mb-2">The CEO's Secret</h1>
+                
+                <!-- 模拟视频进度条 -->
+                <div class="w-full h-1 bg-white/20 rounded-full mb-4 overflow-hidden relative">
+                    <div class="absolute top-0 left-0 h-full bg-red-600 transition-all duration-[2000ms] ease-linear" id="progress-bar" style="width: 0%;"></div>
+                </div>
+
+                <!-- 免费看剧按钮 (过渡阶段) -->
+                <button id="btn-watch-ad" onclick="startWatching()" class="w-full btn-red py-3.5 text-sm hidden shadow-[0_0_15px_rgba(229,9,20,0.5)]">
+                    点击广告 - 继续观看
+                </button>
+
+                <!-- 加锁状态提示 (播放到付费集时显示) -->
+                <div id="locked-state-ui" class="hidden flex-col items-center py-4">
+                    <div class="w-10 h-10 rounded-full bg-black/60 flex justify-center items-center text-white/50 text-lg border border-white/10 mb-2">🔒</div>
+                    <div class="text-sm text-gray-300 font-semibold mb-1">本集需解锁</div>
+                    <div class="loading-spinner hidden" id="auto-unlock-spinner"></div>
+                </div>
+            </div>
+
+            <!-- 弹窗 1: 年龄确认 -->
+            <div id="modal-age" class="absolute inset-0 bg-black/80 hidden z-40 flex justify-center items-center p-5 fade-in">
+                <div class="w-full bg-[#1C1C1C] rounded-2xl p-6 text-center border border-gray-800">
+                    <div class="text-4xl mb-4">🔞</div>
+                    <h2 class="text-base font-bold mb-2 text-white">Age Verification</h2>
+                    <p class="text-xs text-gray-400 mb-6">You must be at least 18 years old to use StoryRush.</p>
+                    <button onclick="confirmAge(true)" class="w-full btn-red py-3 mb-3 text-sm">I am 18 or older</button>
+                    <button onclick="confirmAge(false)" class="w-full btn-gray py-3 text-sm">Exit App</button>
+                </div>
+            </div>
+
+            <!-- 弹窗 2: 首次赠送 288 钻 -->
+            <div id="modal-reward" class="absolute inset-0 bg-black/60 hidden z-40 justify-center items-center p-5 fade-in">
+                <div class="w-full bg-gradient-to-b from-[#2A0A0A] to-[#121212] rounded-2xl p-6 border border-red-900/60 flex flex-col items-center text-center relative">
+                    <div class="absolute -top-10 flex justify-center w-full left-0">
+                        <div class="w-20 h-20 bg-gradient-to-tr from-red-600 to-orange-400 rounded-full flex items-center justify-center text-4xl shadow-[0_0_20px_rgba(229,9,20,0.6)] border-4 border-[#121212]">💎</div>
+                    </div>
+                    <h3 class="text-white font-bold text-base mt-10 mb-1">恭喜获得 <span class="text-yellow-400 text-xl mx-1">288</span> 钻</h3>
+                    <p class="text-gray-400 text-[10px] mb-5">首次进入付费集新客专属追剧基金！</p>
+
+                    <label class="flex items-center justify-center space-x-2 text-xs text-gray-200 cursor-pointer mb-5 bg-black/40 w-full p-3 rounded-xl border border-gray-700/50">
+                        <input type="checkbox" id="check-autounlock" checked class="accent-red-600 w-4 h-4 rounded bg-gray-800 cursor-pointer">
+                        <span class="font-semibold">自动解锁下一集</span>
+                    </label>
+                    <button onclick="acceptReward()" class="w-full btn-red py-3.5 text-sm shadow-[0_4px_15px_rgba(229,9,20,0.4)]">收下并继续</button>
+                </div>
+            </div>
+
+            <!-- 弹窗 3: 手动解锁弹窗 -->
+            <div id="modal-manual-unlock" class="absolute bottom-0 w-full glass-panel border-t border-gray-800 rounded-t-2xl p-5 pb-8 hidden z-40 slide-up">
+                <div class="text-center mb-4">
+                    <div class="text-white font-bold mb-1">解锁第 <span id="manual-ep-num"></span> 集</div>
+                    <div class="text-xs text-gray-400">解锁本集需消耗 50 钻</div>
+                </div>
+                <button onclick="manualUnlock()" class="w-full btn-red py-3.5 text-sm flex justify-center items-center gap-2">
+                    <span>确认解锁</span>
+                    <span class="bg-black/20 px-2 py-0.5 rounded text-xs">-50 💎</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 页面 4: 首页 -->
+        <div id="view-home" class="absolute inset-0 bg-[#0f0f0f] hidden z-10">
+            <div class="px-4 pt-8 pb-3 border-b border-gray-800 flex justify-between items-center"><span class="font-bold">StoryRush</span><span class="text-gray-500">🔍</span></div>
+            <div class="p-4 grid grid-cols-2 gap-3">
+                <!-- 模拟点击海报进入播放器 -->
+                <div onclick="showView('view-player')" class="bg-gray-800 rounded-xl h-40 bg-[url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop')] bg-cover cursor-pointer"></div>
+                <div class="bg-gray-800 rounded-xl h-40 bg-[url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop')] bg-cover"></div>
+            </div>
+            
+            <!-- 专属 24H 悬浮球 (支付中断后触发) -->
+            <div id="home-floating-bubble" class="absolute bottom-20 right-4 flex flex-col items-center hidden z-20">
+                <div class="bg-black/80 text-[8px] text-red-400 px-1.5 py-0.5 rounded border border-red-900 mb-1">23:59:59</div>
+                <div class="relative w-12 h-12 bg-gradient-to-tr from-red-600 to-[#FF8A00] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(229,9,20,0.5)] border-2 border-white/20 animate-bounce">
+                    <!-- 主体点击区域：唤起支付弹窗 -->
+                    <div class="w-full h-full flex justify-center items-center cursor-pointer" onclick="clickBubble()">
+                        <span class="text-lg font-bold text-white">$0.3</span>
+                    </div>
+                    <!-- 关闭 X 按钮：单次 session 隐藏 -->
+                    <div class="absolute -top-1 -right-1 bg-gray-900 border border-gray-600 w-4 h-4 rounded-full flex justify-center items-center text-[10px] text-gray-300 hover:bg-gray-700 cursor-pointer z-10" onclick="dismissBubble(event)">✕</div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 w-full h-[60px] bg-[#121212] border-t border-gray-800 flex justify-around items-center text-gray-500 pb-2">
+                <div class="text-white">🏠</div><div class="text-2xl text-gray-500 bg-[#1A1A1A] w-12 h-12 rounded-full flex justify-center items-center -mt-6 border-[4px] border-[#0f0f0f]">♡</div><div>👤</div>
+            </div>
+        </div>
+
+        <!-- 全局弹窗: 充值与订阅面板 (可覆盖在任意页面上方) -->
+        <div id="modal-subscription" class="absolute bottom-0 w-full h-[88%] bg-[#0f0f0f] rounded-t-[28px] flex flex-col z-50 hidden slide-up shadow-[0_-10px_30px_rgba(0,0,0,0.8)] border-t border-gray-800">
+            <div class="w-full flex justify-center pt-3 pb-2"><div class="w-10 h-1.5 bg-gray-700 rounded-full"></div></div>
+            <div class="px-4 flex-1 overflow-y-auto pb-8 hide-scrollbar">
+                <!-- 余额提示 -->
+                <div class="bg-[#1A1A1A] rounded-2xl p-4 flex justify-between items-center mb-5 border border-gray-800 shadow-md">
+                    <div>
+                        <div class="text-[12px] text-gray-400">解锁本集还需：<span class="text-white">50钻</span></div>
+                    </div>
+                    <div class="bg-gradient-to-r from-[#FF3A3A] to-[#FF8A00] rounded-xl px-3 py-1.5 text-center shadow-[0_0_12px_rgba(255,58,58,0.3)]">
+                        <div class="text-white font-bold text-lg leading-none mb-0.5" id="sub-balance">0</div>
+                        <div class="text-white/90 text-[9px]">当前余额</div>
+                    </div>
+                </div>
+                <!-- 钻石散充 (缩略) -->
+                <h3 class="text-white font-bold text-[14px] mb-3">充值</h3>
+                <div class="grid grid-cols-3 gap-2.5 mb-6">
+                    <div class="bg-[#1C1C1C] rounded-lg py-2.5 text-center border border-gray-800">
+                        <div class="text-white font-bold text-[11px]">100 💎</div><div class="text-gray-500 text-[9px]">$ 0.99</div>
+                    </div>
+                    <div class="bg-gradient-to-b from-[#2A0A0A] to-[#1A1A1A] rounded-lg py-2 text-center border border-[#FF3A3A] relative">
+                        <div class="absolute -top-1.5 left-1/2 transform -translate-x-1/2 bg-[#FF8A00] text-white text-[8px] px-1.5 rounded shadow-sm whitespace-nowrap">More250</div>
+                        <div class="text-[#FFD700] font-bold text-[11px] mt-1">500 💎</div><div class="text-red-400 text-[9px]">$ 4.99</div>
+                    </div>
+                    <div class="bg-[#1C1C1C] rounded-lg py-2.5 text-center border border-gray-800">
+                        <div class="text-white font-bold text-[11px]">1000 💎</div><div class="text-gray-500 text-[9px]">$ 9.99</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="h-[1px] bg-gray-800 flex-1"></div>
+                    <div class="text-[9px] text-gray-500">订阅VIP权益，周期内无限解锁全站</div>
+                    <div class="h-[1px] bg-gray-800 flex-1"></div>
+                </div>
+                <!-- 订阅区 -->
+                <div class="space-y-3">
+                    <!-- 核心动态卡片：新人特惠订阅 ($0.3) -->
+                    <div id="special-offer-card" class="bg-gradient-to-r from-[#3A1010] to-[#1C0808] border border-red-500 rounded-2xl p-4 relative shadow-[0_0_15px_rgba(229,9,20,0.15)]">
+                        <div class="absolute -top-2 right-3 bg-red-600 text-[9px] px-2 py-0.5 rounded-full font-bold text-white shadow-sm">限时优惠</div>
+                        <h4 class="font-bold text-[13px] text-white mb-1">新人专享优惠订阅</h4>
+                        <p class="text-[10px] text-red-300/80 mb-3">解锁后全站内容免费看一周</p>
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <div class="text-white font-extrabold text-[18px] leading-none mb-1">首周仅需 $0.3</div>
+                                <div class="text-[9px] text-gray-400">续订 $3.99/周</div>
+                            </div>
+                            <button onclick="processSubscription(true)" class="bg-gradient-to-r from-[#FF3A3A] to-[#E50914] text-white font-bold text-xs px-4 py-2 rounded-full shadow-[0_0_10px_rgba(229,9,20,0.4)] active:opacity-80">完成支付(演示)</button>
+                        </div>
+                    </div>
+
+                    <!-- 普通周订阅 -->
+                    <div class="bg-[#1A1A1A] border border-gray-800 rounded-2xl p-4 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-[13px] text-gray-200 mb-1">周订阅方案 <span class="text-white ml-1">$19.99</span></h4>
+                            <p class="text-[10px] text-gray-500">一周内解锁所有短剧</p>
+                        </div>
+                        <button class="bg-[#2A2A2A] text-[#9CA3AF] font-bold text-xs px-4 py-2 rounded-full border border-gray-600">常规订阅</button>
+                    </div>
+                </div>
+                
+                <!-- 中断按钮 -->
+                <button onclick="processSubscription(false)" class="w-full bg-transparent border border-gray-700 text-gray-400 hover:text-white py-3.5 rounded-full text-xs font-bold mt-6 transition-colors">支付中断 / 暂不购买 (退回首页)</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 交互逻辑 JS -->
+    <script>
+        // 核心状态机体系
+        let state = {
+            balance: 0,
+            episode: 0,
+            isAutoUnlock: true,
+            isVIP: false,
+            epPrice: 50,
+            
+            // 生命周期相关变量
+            hasSubscribedOffer: false,        // 是否已订阅新人优惠
+            offerExpired: false,              // 24小时倒计时是否已结束
+            offerTimerActive: false,          // 24小时倒计时是否在走（支付中断后触发）
+            bubbleDismissedThisSession: false // 用户在当前Session中是否手动叉掉了悬浮球
+        };
+        let autoPlayTimer = null;
+
+        // UI 元素
+        const els = {
+            views: document.querySelectorAll('.app-frame > .absolute.inset-0:not(.bg-black\\/80):not(.bg-black\\/60):not(#modal-subscription)'), // 主页面
+            modals: [document.getElementById('modal-age'), document.getElementById('modal-reward'), document.getElementById('modal-manual-unlock')],
+            subModal: document.getElementById('modal-subscription'),
+            balUi: document.getElementById('ui-balance'),
+            epBadge: document.getElementById('ui-ep-badge'),
+            progressBar: document.getElementById('progress-bar'),
+            lockedUi: document.getElementById('locked-state-ui'),
+            btnWatch: document.getElementById('btn-watch-ad'),
+            spinner: document.getElementById('auto-unlock-spinner'),
+            bubble: document.getElementById('home-floating-bubble'),
+            specialCard: document.getElementById('special-offer-card'),
+            
+            // Debug UI
+            log: document.getElementById('flow-log'),
+            dbgBal: document.getElementById('debug-balance'),
+            dbgEp: document.getElementById('debug-episode'),
+            dbgAuto: document.getElementById('debug-autounlock'),
+            dbgVip: document.getElementById('debug-vip')
+        };
+
+        // 写入日志
+        function addLog(msg, isHighlight = false) {
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            const color = isHighlight ? 'text-yellow-400 font-bold' : 'text-gray-400';
+            els.log.innerHTML += `<div class="${color}">[${time}] ${msg}</div>`;
+            els.log.scrollTop = els.log.scrollHeight;
+        }
+
+        // 更新状态 UI
+        function updateStateUI() {
+            els.balUi.innerText = state.balance;
+            els.dbgBal.innerText = state.balance;
+            els.dbgEp.innerText = state.episode > 0 ? `第 ${state.episode} 集` : '未开始';
+            els.dbgAuto.innerText = state.isAutoUnlock ? '✅ 已开启' : '❌ 已关闭';
+            els.dbgAuto.className = state.isAutoUnlock ? 'text-sm font-bold text-green-400' : 'text-sm font-bold text-red-400';
+            els.dbgVip.innerText = state.isVIP ? '👑 已订阅特惠' : '普通用户';
+            
+            if(state.episode > 0) {
+                if(state.episode < 5) els.epBadge.innerText = `Episode ${state.episode} (Free)`;
+                else els.epBadge.innerText = `Episode ${state.episode} (Paid)`;
+            }
+        }
+
+        // 切换主页面
+        function showView(id) {
+            els.views.forEach(v => v.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            els.modals.forEach(m => m.classList.add('hidden')); 
+            els.subModal.classList.add('hidden');
+        }
+
+        // ========================== 生命周期与联动控制核心逻辑 ========================== //
+
+        // 评估首页悬浮球是否应该展示
+        function evaluateBubbleVisibility() {
+            // 条件：倒计时已激活 且 未订阅 且 未过期 且 本次启动没手动叉掉
+            if (state.offerTimerActive && !state.hasSubscribedOffer && !state.offerExpired && !state.bubbleDismissedThisSession) {
+                els.bubble.classList.remove('hidden');
+            } else {
+                els.bubble.classList.add('hidden');
+            }
+        }
+
+        // 评估支付面板内的 $0.3 特惠卡片是否应该展示
+        function evaluateSpecialCardVisibility() {
+            // 任意入口调起支付页，只要未订阅且没过 24 小时，就应该展示特惠
+            if (!state.hasSubscribedOffer && !state.offerExpired) {
+                els.specialCard.classList.remove('hidden');
+            } else {
+                els.specialCard.classList.add('hidden');
+            }
+        }
+
+        // 测试操作：悬浮球点击唤起支付面板
+        function clickBubble() {
+            addLog('-> 【操作】点击首页悬浮球，唤起支付弹窗', true);
+            evaluateSpecialCardVisibility();
+            document.getElementById('sub-balance').innerText = state.balance;
+            els.subModal.classList.remove('hidden');
+        }
+
+        // 测试操作：悬浮球点击 X 关闭 (单次 Session 隐藏)
+        function dismissBubble(e) {
+            e.stopPropagation(); // 阻止冒泡唤起支付面板
+            state.bubbleDismissedThisSession = true; // 记录 Session 状态
+            addLog('-> 【操作】用户点击了悬浮球的 ✕ 关闭');
+            addLog('   - 悬浮球在【本次应用启动期间】不再展示', true);
+            evaluateBubbleVisibility();
+        }
+
+        // 调试工具：模拟杀掉进程后下次开启App (恢复 Session)
+        function restartAppSession() {
+            // 重置 Session 级变量
+            state.bubbleDismissedThisSession = false; 
+            
+            showView('view-home'); // 直接进首页看状态
+            updateStateUI();
+            addLog('======================================');
+            addLog('-> 🔄 【模拟】用户杀掉进程后，重新开启 App', true);
+            
+            if (state.hasSubscribedOffer) {
+                addLog('   - 由于用户已订阅特惠，悬浮球不再展示');
+            } else if (state.offerExpired) {
+                addLog('   - 由于24小时特惠期已过，悬浮球不再展示');
+            } else if (state.offerTimerActive) {
+                addLog('   - 满足所有条件，【悬浮球恢复展示】', true);
+            } else {
+                addLog('   - 倒计时机制尚未触发，不展示');
+            }
+            evaluateBubbleVisibility();
+        }
+
+        // 调试工具：模拟 24 小时倒计时结束
+        function expireOfferTimer() {
+            state.offerExpired = true; // 永久过期
+            addLog('======================================');
+            addLog('-> ⏩ 【模拟】24小时倒计时结束', true);
+            addLog('   - 首页悬浮球已被强制隐藏');
+            addLog('   - 支付面板内的新人特惠卡片已被隐藏');
+            evaluateBubbleVisibility();
+            // 如果此时面板是开着的，实时隐藏卡片
+            evaluateSpecialCardVisibility(); 
+        }
+
+        // ========================== 标准流程控制 ========================== //
+
+        function resetDemo() {
+            clearTimeout(autoPlayTimer);
+            state = { balance: 0, episode: 0, isAutoUnlock: true, isVIP: false, epPrice: 50, hasSubscribedOffer: false, offerExpired: false, offerTimerActive: false, bubbleDismissedThisSession: false };
+            els.log.innerHTML = '';
+            els.progressBar.style.width = '0%';
+            els.lockedUi.classList.add('hidden');
+            els.btnWatch.classList.add('hidden');
+            evaluateBubbleVisibility();
+            updateStateUI();
+            showView('view-splash');
+            addLog('系统全局重置完毕');
+        }
+
+        function startFlow(simulateMainland) {
+            resetDemo();
+            addLog('-> 【节点】启动App，进入启动页', true);
+            setTimeout(() => {
+                addLog('-> 【节点】判断 IP 是否非大陆...');
+                if(simulateMainland) {
+                    addLog('   - 检测到大陆 IP');
+                    addLog('-> 【节点】进入IP过滤限制页', true);
+                    showView('view-ip-block');
+                } else {
+                    addLog('   - IP 正常');
+                    addLog('-> 【节点】进入年龄确认页面');
+                    showView('view-player');
+                    els.modals[0].classList.remove('hidden'); // modal-age
+                }
+            }, 800);
+        }
+
+        function confirmAge(isAdult) {
+            if(!isAdult) {
+                addLog('-> 【节点】用户未满18岁 -> 退出App', true);
+                showView('view-splash');
+            } else {
+                addLog('-> 【节点】用户确认已满18岁');
+                els.modals[0].classList.add('hidden');
+                els.btnWatch.classList.remove('hidden');
+                addLog('-> 等待用户点击广告继续观看...');
+            }
+        }
+
+        function startWatching() {
+            els.btnWatch.classList.add('hidden');
+            addLog('-> 【节点】点击“继续观看”');
+            state.episode = 1; updateStateUI();
+            addLog('   - 播放第 1 集 (免费)');
+            let epCounter = 1;
+            const fastPlay = setInterval(() => {
+                epCounter++;
+                state.episode = epCounter;
+                updateStateUI();
+                if(epCounter === 5) {
+                    clearInterval(fastPlay);
+                    addLog('-> 【节点】首次进入付费集 (第5集)', true);
+                    reachPaywall();
+                } else {
+                    addLog(`   - 播放第 ${epCounter} 集 (免费)`);
+                }
+            }, 600);
+        }
+
+        function reachPaywall() {
+            addLog('-> 【节点】进入加锁状态');
+            els.lockedUi.classList.remove('hidden');
+            els.progressBar.style.width = '0%';
+            setTimeout(() => {
+                addLog('-> 【节点】弹出赠送288钻弹窗', true);
+                els.modals[1].classList.remove('hidden'); // modal-reward
+            }, 500);
+        }
+
+        function acceptReward() {
+            const isChecked = document.getElementById('check-autounlock').checked;
+            state.isAutoUnlock = isChecked;
+            state.balance = 288;
+            updateStateUI();
+            els.modals[1].classList.add('hidden');
+            addLog(`-> 领取 288 钻。是否勾选自动解锁: ${isChecked ? '是' : '否'}`, true);
+            if(isChecked) {
+                addLog('-> 【节点】自动解锁所有集，直到余额不足');
+                processAutoUnlockLoop();
+            } else {
+                addLog('-> 【节点】手动解锁当前集');
+                showManualUnlock();
+            }
+        }
+
+        function processAutoUnlockLoop() {
+            els.spinner.classList.remove('hidden');
+            function nextEp() {
+                if(state.balance >= state.epPrice) {
+                    state.balance -= state.epPrice;
+                    state.episode++;
+                    updateStateUI();
+                    addLog(`   - 自动扣除50钻。剩余 ${state.balance} 钻。播放第 ${state.episode} 集`);
+                    els.progressBar.style.width = '100%';
+                    els.progressBar.style.transition = 'width 1s linear';
+                    autoPlayTimer = setTimeout(() => {
+                        els.progressBar.style.transition = 'none';
+                        els.progressBar.style.width = '0%';
+                        setTimeout(nextEp, 50);
+                    }, 1000);
+                } else {
+                    els.spinner.classList.add('hidden');
+                    addLog('-> 【节点】余额不足，弹出订阅弹窗', true);
+                    triggerSubscriptionModal();
+                }
+            }
+            nextEp();
+        }
+
+        function showManualUnlock() {
+            document.getElementById('manual-ep-num').innerText = state.episode;
+            els.modals[2].classList.remove('hidden'); // modal-manual-unlock
+        }
+
+        function manualUnlock() {
+            if(state.balance >= state.epPrice) {
+                state.balance -= state.epPrice;
+                updateStateUI();
+                els.modals[2].classList.add('hidden');
+                addLog(`   - 手动扣除50钻。剩余 ${state.balance} 钻。`);
+                els.progressBar.style.transition = 'width 1s linear';
+                els.progressBar.style.width = '100%';
+                autoPlayTimer = setTimeout(() => {
+                    els.progressBar.style.transition = 'none';
+                    els.progressBar.style.width = '0%';
+                    state.episode++;
+                    updateStateUI();
+                    showManualUnlock();
+                }, 1000);
+            } else {
+                els.modals[2].classList.add('hidden');
+                addLog('-> 【节点】余额不足，弹出订阅弹窗', true);
+                triggerSubscriptionModal();
+            }
+        }
+
+        // 通过各种入口触发订阅支付面板（包含特惠校验）
+        function triggerSubscriptionModal() {
+            addLog('-> 唤起统一支付/订阅面板');
+            document.getElementById('sub-balance').innerText = state.balance;
+            evaluateSpecialCardVisibility(); // 核心：判断当前是否显示 $0.3 卡片
+            els.subModal.classList.remove('hidden');
+        }
+
+        // 处理支付面板返回结果
+        function processSubscription(isSuccess) {
+            els.subModal.classList.add('hidden');
+            
+            if(isSuccess) {
+                addLog('-> 【操作】完成支付 (订阅新人专享优惠)', true);
+                state.isVIP = true;
+                state.hasSubscribedOffer = true; // 记录已订阅特惠
+                updateStateUI();
+                evaluateBubbleVisibility(); // 支付成功后立即校验隐藏悬浮球
+                els.lockedUi.classList.add('hidden');
+                addLog('-> ✅ 订阅成功。新人专享优惠已从所有入口永久隐藏。');
+            } else {
+                addLog('-> 【操作】支付中断，退回首页', true);
+                state.offerTimerActive = true; // 支付中断，正式激活 24 小时倒计时逻辑
+                showView('view-home');
+                evaluateBubbleVisibility(); // 显示首页悬浮球
+                addLog('-> 【节点】专享订阅优惠支持显示 24小时 (启动首页悬浮球)', true);
+            }
+        }
+
+        // 初始化
+        updateStateUI();
+    </script>
+</body>
+</html>
