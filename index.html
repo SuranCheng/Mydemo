@@ -7,12 +7,28 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f0f0f; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        
+        /* 强力锁定左右布局，禁止任何屏幕下的上下折叠 */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0f0f0f; 
+            color: #fff; 
+            display: flex !important;
+            flex-direction: row !important; /* 强制水平排列 */
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            gap: 2.5rem; 
+            overflow-x: auto; /* 屏幕太小时允许横向滑动 */
+            padding: 2rem;
+        }
         
         /* 手机框架 */
         .app-frame { width: 320px; height: 650px; background: #000; border-radius: 36px; border: 8px solid #222; overflow: hidden; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); flex-shrink: 0; }
         
         /* 隐藏滚动条 */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
         ::-webkit-scrollbar { display: none; }
         
         /* 按钮与面板样式 */
@@ -33,16 +49,14 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="p-4 md:p-8 flex-col md:flex-row gap-8">
+<body>
 
-    <!-- 演示控制台 (给工程师看的状态栏) -->
-    <div class="w-full md:w-[400px] bg-[#121212] border border-gray-800 rounded-2xl p-6 flex flex-col h-[650px]">
+    <div class="w-[380px] bg-[#121212] border border-gray-800 rounded-2xl p-6 flex flex-col h-[650px] flex-shrink-0">
         <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
             <span class="text-red-600">⚙️</span> 演示控制台 & 流程跟踪
         </h2>
-        <p class="text-xs text-gray-500 mb-4 pb-4 border-b border-gray-800">已接入 24H 倒计时与悬浮球生命周期状态机</p>
+        <p class="text-[11px] text-gray-500 mb-4 pb-4 border-b border-gray-800">24H 倒计时、中断停留与 VIP 无阻断连播机制已生效</p>
 
-        <!-- 状态监控 -->
         <div class="bg-black border border-gray-800 rounded-xl p-4 mb-4 grid grid-cols-2 gap-4">
             <div>
                 <div class="text-[10px] text-gray-500">钻石余额 (钻)</div>
@@ -62,55 +76,54 @@
             </div>
         </div>
 
-        <!-- 流程图日志跟踪 -->
         <h3 class="text-sm font-bold text-gray-400 mb-2">当前行为日志：</h3>
         <div class="flex-1 overflow-y-auto pr-2 space-y-2 text-xs font-mono" id="flow-log">
-            <!-- 日志动态插入 -->
-        </div>
+            </div>
 
-        <!-- 场景控制面板 -->
         <div class="pt-4 mt-4 border-t border-gray-800 space-y-2">
             <div class="text-[10px] text-gray-500 mb-1">常规启动测试：</div>
             <div class="flex gap-2 mb-3">
-                <button onclick="startFlow(false)" class="flex-1 bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 py-1.5 rounded-lg transition text-xs">▶ 正常启动</button>
-                <button onclick="startFlow(true)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-1.5 rounded-lg transition text-xs">🚫 拦截测试</button>
+                <button onclick="startFlow(false)" class="flex-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/40 py-1.5 rounded-lg transition text-xs font-bold">▶ 正常启动</button>
+                <button onclick="startFlow(true)" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 py-1.5 rounded-lg transition text-xs">🚫 模拟大陆IP</button>
             </div>
             
-            <div class="text-[10px] text-gray-500 mb-1">隐性边界条件模拟测试：</div>
-            <button onclick="restartAppSession()" class="w-full bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 border border-blue-900/50 py-2 rounded-lg transition text-xs font-bold">
-                🔄 模拟: 杀掉进程后下次开启App (重置Session)
-            </button>
-            <button onclick="expireOfferTimer()" class="w-full bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-500 border border-yellow-900/50 py-2 rounded-lg transition text-xs font-bold">
-                ⏩ 模拟: 24小时倒计时结束 (特惠过期)
-            </button>
+            <div class="text-[10px] text-gray-500 mb-1">大结局完播场景直接测试 (跳过前置)：</div>
+            <div class="flex gap-2 mb-1">
+                <button onclick="testDramaEnd()" class="flex-1 bg-purple-900/30 hover:bg-purple-900/50 text-purple-400 border border-purple-900/50 py-2 rounded-lg transition text-xs font-bold">🎬 测试: 短剧大结局</button>
+                <button onclick="testNovelEnd()" class="flex-1 bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 border border-blue-900/50 py-2 rounded-lg transition text-xs font-bold">📖 测试: 小说大结局</button>
+            </div>
+            
+            <div class="text-[10px] text-gray-500 mb-1 mt-3">隐性边界条件模拟测试：</div>
+            <div class="flex gap-2">
+                <button onclick="restartAppSession()" class="w-1/2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 border border-blue-900/50 py-2 rounded-lg transition text-[10px] font-bold">
+                    🔄 重启App<br>(测冷却恢复)
+                </button>
+                <button onclick="expireOfferTimer()" class="w-1/2 bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-500 border border-yellow-900/50 py-2 rounded-lg transition text-[10px] font-bold">
+                    ⏩ 24H 倒计完<br>(特惠过期)
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- 手机屏幕 -->
     <div class="app-frame relative">
         
-        <!-- 页面 1: 启动页 Splash -->
         <div id="view-splash" class="absolute inset-0 bg-black flex justify-center items-center z-10">
             <div class="w-20 h-20 bg-gradient-to-tr from-red-600 to-orange-400 rounded-3xl flex justify-center items-center text-4xl shadow-[0_0_30px_rgba(229,9,20,0.6)]">▶</div>
         </div>
 
-        <!-- 页面 2: 大陆 IP 拦截页 -->
         <div id="view-ip-block" class="absolute inset-0 bg-[#0a0a0a] hidden z-20 flex-col items-center justify-center p-8 text-center">
             <div class="text-6xl mb-6 opacity-60 filter grayscale">🌍</div>
             <h2 class="text-lg font-bold text-white mb-2">Service Unavailable</h2>
-            <p class="text-xs text-gray-400 mb-8">StoryRush currently does not provide services in your region.</p>
+            <p class="text-xs text-gray-400 mb-8">Sorry, StoryRush currently does not provide services in your country or region.</p>
             <button onclick="resetDemo()" class="w-full btn-gray py-3 text-sm">Exit App</button>
         </div>
 
-        <!-- 页面 3: 主播放器界面 (承载视频和各级弹窗) -->
         <div id="view-player" class="absolute inset-0 bg-black hidden z-10">
-            <!-- 模拟视频画面 -->
             <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop')] bg-cover bg-center opacity-80" id="video-bg"></div>
             <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/90"></div>
             
-            <!-- 视频顶部信息 -->
-            <div class="absolute top-12 left-4 right-4 flex justify-between items-center z-10">
-                <span class="text-white text-lg font-bold">❮</span>
+            <div class="absolute top-12 left-4 right-4 flex justify-between items-center z-10" id="player-header">
+                <span class="text-white text-lg font-bold cursor-pointer drop-shadow-md px-2 py-1 select-none" onclick="returnToHome()">❮</span>
                 <div class="flex bg-black/50 rounded-full px-3 py-1 items-center gap-1 border border-white/10 cursor-pointer" onclick="triggerSubscriptionModal()">
                     <span class="text-[10px] text-gray-300">余额</span>
                     <span class="text-xs font-bold text-yellow-400" id="ui-balance">0</span>
@@ -118,30 +131,27 @@
                 </div>
             </div>
 
-            <!-- 底部剧集信息 -->
-            <div class="absolute bottom-6 left-4 right-4 z-10">
+            <div class="absolute bottom-6 left-4 right-4 z-10" id="player-footer">
                 <div class="text-red-500 font-bold text-xs mb-1" id="ui-ep-badge">Episode 1 (Free)</div>
                 <h1 class="text-white font-bold text-lg mb-2">The CEO's Secret</h1>
                 
-                <!-- 模拟视频进度条 -->
                 <div class="w-full h-1 bg-white/20 rounded-full mb-4 overflow-hidden relative">
                     <div class="absolute top-0 left-0 h-full bg-red-600 transition-all duration-[2000ms] ease-linear" id="progress-bar" style="width: 0%;"></div>
                 </div>
 
-                <!-- 免费看剧按钮 (过渡阶段) -->
                 <button id="btn-watch-ad" onclick="startWatching()" class="w-full btn-red py-3.5 text-sm hidden shadow-[0_0_15px_rgba(229,9,20,0.5)]">
                     点击广告 - 继续观看
                 </button>
 
-                <!-- 加锁状态提示 (播放到付费集时显示) -->
                 <div id="locked-state-ui" class="hidden flex-col items-center py-4">
-                    <div class="w-10 h-10 rounded-full bg-black/60 flex justify-center items-center text-white/50 text-lg border border-white/10 mb-2">🔒</div>
-                    <div class="text-sm text-gray-300 font-semibold mb-1">本集需解锁</div>
+                    <div class="w-12 h-12 rounded-full bg-black/70 flex justify-center items-center text-white/70 text-xl border border-white/20 mb-3 shadow-lg">🔒</div>
+                    <div class="text-sm text-white font-bold mb-1 tracking-wide">本集需解锁</div>
+                    <div class="text-[10px] text-gray-400 mb-2">开通订阅畅看全站内容</div>
                     <div class="loading-spinner hidden" id="auto-unlock-spinner"></div>
+                    <button onclick="triggerSubscriptionModal()" class="mt-2 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-5 py-2 rounded-full hidden shadow-md" id="btn-quick-pay">去解锁</button>
                 </div>
             </div>
 
-            <!-- 弹窗 1: 年龄确认 -->
             <div id="modal-age" class="absolute inset-0 bg-black/80 hidden z-40 flex justify-center items-center p-5 fade-in">
                 <div class="w-full bg-[#1C1C1C] rounded-2xl p-6 text-center border border-gray-800">
                     <div class="text-4xl mb-4">🔞</div>
@@ -152,7 +162,6 @@
                 </div>
             </div>
 
-            <!-- 弹窗 2: 首次赠送 288 钻 -->
             <div id="modal-reward" class="absolute inset-0 bg-black/60 hidden z-40 justify-center items-center p-5 fade-in">
                 <div class="w-full bg-gradient-to-b from-[#2A0A0A] to-[#121212] rounded-2xl p-6 border border-red-900/60 flex flex-col items-center text-center relative">
                     <div class="absolute -top-10 flex justify-center w-full left-0">
@@ -169,7 +178,6 @@
                 </div>
             </div>
 
-            <!-- 弹窗 3: 手动解锁弹窗 -->
             <div id="modal-manual-unlock" class="absolute bottom-0 w-full glass-panel border-t border-gray-800 rounded-t-2xl p-5 pb-8 hidden z-40 slide-up">
                 <div class="text-center mb-4">
                     <div class="text-white font-bold mb-1">解锁第 <span id="manual-ep-num"></span> 集</div>
@@ -180,26 +188,72 @@
                     <span class="bg-black/20 px-2 py-0.5 rounded text-xs">-50 💎</span>
                 </button>
             </div>
+
+            <div id="drama-countdown-overlay" class="absolute inset-0 bg-black z-30 hidden flex-col items-center justify-center p-6 fade-in">
+                <div class="w-[60px] h-[60px] rounded-full border border-[#333] flex items-center justify-center mb-8">
+                    <span class="text-white text-2xl font-normal" id="countdown-number">3</span>
+                </div>
+                <div class="text-gray-400 text-[10px] tracking-[0.2em] mb-3 uppercase font-semibold">Up Next</div>
+                <div class="text-white text-[22px] font-bold text-center leading-snug mb-3">Reborn: The Mafia's<br>Wife</div>
+                <div class="text-red-500 text-sm mb-16 font-semibold">Episode 1</div>
+                <button onclick="playNextDrama()" class="w-full text-white font-bold py-3 mb-2 text-[15px] bg-transparent active:opacity-70 transition-opacity">Play Now</button>
+                <button onclick="cancelCountdown()" class="w-full bg-[#1C1C1E] text-gray-300 py-3.5 rounded-full font-bold text-[15px] active:bg-[#2A2A2C] transition-colors">Cancel</button>
+            </div>
         </div>
 
-        <!-- 页面 4: 首页 -->
+        <div id="view-novel-end" class="absolute inset-0 bg-[#0f0f0f] hidden z-10 flex-col">
+            <div class="px-4 pt-12 pb-4 flex justify-between items-center bg-[#0f0f0f] sticky top-0 z-10">
+                <span class="text-white text-lg font-bold cursor-pointer" onclick="showView('view-home')">❮</span>
+                <span class="text-gray-300">...</span>
+            </div>
+            <div class="flex-1 overflow-y-auto px-5 pb-12 hide-scrollbar">
+                <div class="text-gray-300 text-[15px] leading-relaxed mb-6 space-y-4">
+                    <p>...The CEO pulled her close, the city lights reflecting in his eyes. "You are not going anywhere," he whispered.</p>
+                    <p>She finally smiled, knowing her long journey had found its home.</p>
+                </div>
+                <div class="flex items-center justify-center gap-4 text-[#444] mb-10 text-sm tracking-[0.3em] font-semibold">
+                    <span>—</span> THE END <span>—</span>
+                </div>
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="w-1 h-3.5 bg-red-600 rounded-sm"></div>
+                    <h3 class="text-white font-bold text-base">You Might Also Like</h3>
+                </div>
+                <div class="space-y-3">
+                    <div class="bg-[#1C1C1E] border border-white/5 rounded-xl p-3 flex gap-3 cursor-pointer">
+                        <div class="w-[60px] h-[80px] bg-gray-800 rounded bg-[url('https://images.unsplash.com/photo-1618666012174-83b441c0bc76?q=80&w=150&auto=format&fit=crop')] bg-cover flex-shrink-0"></div>
+                        <div class="flex flex-col justify-center">
+                            <div class="text-white font-bold text-[13px] mb-1">Secret Billionaire</div>
+                            <div class="text-gray-500 text-[11px] leading-tight line-clamp-2 mb-2">He pretended to be poor, but his real identity was the richest man in...</div>
+                            <div class="flex gap-1.5"><span class="text-red-400 border border-red-900/50 bg-red-900/10 text-[9px] px-1.5 py-0.5 rounded">Urban</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-[#1C1C1E] border border-white/5 rounded-xl p-3 flex gap-3 cursor-pointer">
+                        <div class="w-[60px] h-[80px] bg-gray-800 rounded bg-[url('https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=150&auto=format&fit=crop')] bg-cover flex-shrink-0"></div>
+                        <div class="flex flex-col justify-center">
+                            <div class="text-white font-bold text-[13px] mb-1">Reborn: Revenge</div>
+                            <div class="text-gray-500 text-[11px] leading-tight line-clamp-2 mb-2">After being betrayed by her sister, she woke up in the arms of the mafia...</div>
+                            <div class="flex gap-1.5"><span class="text-red-400 border border-red-900/50 bg-red-900/10 text-[9px] px-1.5 py-0.5 rounded">Romance</span><span class="text-gray-400 border border-gray-700 bg-gray-800/50 text-[9px] px-1.5 py-0.5 rounded">Revenge</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="view-home" class="absolute inset-0 bg-[#0f0f0f] hidden z-10">
             <div class="px-4 pt-8 pb-3 border-b border-gray-800 flex justify-between items-center"><span class="font-bold">StoryRush</span><span class="text-gray-500">🔍</span></div>
             <div class="p-4 grid grid-cols-2 gap-3">
-                <!-- 模拟点击海报进入播放器 -->
-                <div onclick="showView('view-player')" class="bg-gray-800 rounded-xl h-40 bg-[url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop')] bg-cover cursor-pointer"></div>
+                <div onclick="showView('view-player')" class="bg-gray-800 rounded-xl h-40 bg-[url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop')] bg-cover cursor-pointer flex justify-center items-center">
+                    <span class="bg-black/50 px-2 py-1 text-xs rounded font-bold backdrop-blur">▶ 继续观看</span>
+                </div>
                 <div class="bg-gray-800 rounded-xl h-40 bg-[url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop')] bg-cover"></div>
             </div>
             
-            <!-- 专属 24H 悬浮球 (支付中断后触发) -->
             <div id="home-floating-bubble" class="absolute bottom-20 right-4 flex flex-col items-center hidden z-20">
-                <div class="bg-black/80 text-[8px] text-red-400 px-1.5 py-0.5 rounded border border-red-900 mb-1">23:59:59</div>
-                <div class="relative w-12 h-12 bg-gradient-to-tr from-red-600 to-[#FF8A00] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(229,9,20,0.5)] border-2 border-white/20 animate-bounce">
-                    <!-- 主体点击区域：唤起支付弹窗 -->
-                    <div class="w-full h-full flex justify-center items-center cursor-pointer" onclick="clickBubble()">
+                <div class="bg-black/80 text-[9px] text-red-400 px-1.5 py-0.5 rounded border border-red-900 mb-1 font-mono tracking-wider" id="bubble-countdown">23:59:59</div>
+                <div class="relative w-12 h-12 bg-gradient-to-tr from-red-600 to-[#FF8A00] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(229,9,20,0.5)] border-2 border-white/20 animate-bounce cursor-pointer">
+                    <div class="w-full h-full flex justify-center items-center" onclick="triggerSubscriptionModal()">
                         <span class="text-lg font-bold text-white">$0.3</span>
                     </div>
-                    <!-- 关闭 X 按钮：单次 session 隐藏 -->
                     <div class="absolute -top-1 -right-1 bg-gray-900 border border-gray-600 w-4 h-4 rounded-full flex justify-center items-center text-[10px] text-gray-300 hover:bg-gray-700 cursor-pointer z-10" onclick="dismissBubble(event)">✕</div>
                 </div>
             </div>
@@ -209,11 +263,9 @@
             </div>
         </div>
 
-        <!-- 全局弹窗: 充值与订阅面板 (可覆盖在任意页面上方) -->
         <div id="modal-subscription" class="absolute bottom-0 w-full h-[88%] bg-[#0f0f0f] rounded-t-[28px] flex flex-col z-50 hidden slide-up shadow-[0_-10px_30px_rgba(0,0,0,0.8)] border-t border-gray-800">
             <div class="w-full flex justify-center pt-3 pb-2"><div class="w-10 h-1.5 bg-gray-700 rounded-full"></div></div>
             <div class="px-4 flex-1 overflow-y-auto pb-8 hide-scrollbar">
-                <!-- 余额提示 -->
                 <div class="bg-[#1A1A1A] rounded-2xl p-4 flex justify-between items-center mb-5 border border-gray-800 shadow-md">
                     <div>
                         <div class="text-[12px] text-gray-400">解锁本集还需：<span class="text-white">50钻</span></div>
@@ -223,7 +275,7 @@
                         <div class="text-white/90 text-[9px]">当前余额</div>
                     </div>
                 </div>
-                <!-- 钻石散充 (缩略) -->
+                
                 <h3 class="text-white font-bold text-[14px] mb-3">充值</h3>
                 <div class="grid grid-cols-3 gap-2.5 mb-6">
                     <div class="bg-[#1C1C1C] rounded-lg py-2.5 text-center border border-gray-800">
@@ -237,28 +289,28 @@
                         <div class="text-white font-bold text-[11px]">1000 💎</div><div class="text-gray-500 text-[9px]">$ 9.99</div>
                     </div>
                 </div>
+                
                 <div class="flex items-center gap-2 mb-5">
                     <div class="h-[1px] bg-gray-800 flex-1"></div>
                     <div class="text-[9px] text-gray-500">订阅VIP权益，周期内无限解锁全站</div>
                     <div class="h-[1px] bg-gray-800 flex-1"></div>
                 </div>
-                <!-- 订阅区 -->
-                <div class="space-y-3">
-                    <!-- 核心动态卡片：新人特惠订阅 ($0.3) -->
+
+                <div class="space-y-4">
                     <div id="special-offer-card" class="bg-gradient-to-r from-[#3A1010] to-[#1C0808] border border-red-500 rounded-2xl p-4 relative shadow-[0_0_15px_rgba(229,9,20,0.15)]">
-                        <div class="absolute -top-2 right-3 bg-red-600 text-[9px] px-2 py-0.5 rounded-full font-bold text-white shadow-sm">限时优惠</div>
-                        <h4 class="font-bold text-[13px] text-white mb-1">新人专享优惠订阅</h4>
-                        <p class="text-[10px] text-red-300/80 mb-3">解锁后全站内容免费看一周</p>
+                        <div class="absolute -top-2 right-3 bg-red-600 text-[9px] px-2 py-0.5 rounded-full font-bold text-white shadow-sm flex items-center gap-1">
+                            ⏳ <span id="modal-countdown" class="font-mono tracking-wider">23:59:59</span> 后结束
+                        </div>
+                        <h4 class="font-bold text-[14px] text-white mb-1">新人专享优惠订阅</h4>
+                        <p class="text-[10px] text-red-300/90 mb-3 leading-relaxed">VIP权益首周$0.3 续期$3.99<br>全站内容免费看；随时取消</p>
                         <div class="flex justify-between items-end">
                             <div>
-                                <div class="text-white font-extrabold text-[18px] leading-none mb-1">首周仅需 $0.3</div>
-                                <div class="text-[9px] text-gray-400">续订 $3.99/周</div>
+                                <div class="text-white font-extrabold text-[20px] leading-none mb-1">首周 $0.3</div>
                             </div>
-                            <button onclick="processSubscription(true)" class="bg-gradient-to-r from-[#FF3A3A] to-[#E50914] text-white font-bold text-xs px-4 py-2 rounded-full shadow-[0_0_10px_rgba(229,9,20,0.4)] active:opacity-80">完成支付(演示)</button>
+                            <button onclick="processSubscription(true)" class="bg-gradient-to-r from-[#FF3A3A] to-[#E50914] text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-[0_0_10px_rgba(229,9,20,0.4)] active:opacity-80">立即订阅</button>
                         </div>
                     </div>
 
-                    <!-- 普通周订阅 -->
                     <div class="bg-[#1A1A1A] border border-gray-800 rounded-2xl p-4 flex justify-between items-center">
                         <div>
                             <h4 class="font-bold text-[13px] text-gray-200 mb-1">周订阅方案 <span class="text-white ml-1">$19.99</span></h4>
@@ -268,34 +320,32 @@
                     </div>
                 </div>
                 
-                <!-- 中断按钮 -->
-                <button onclick="processSubscription(false)" class="w-full bg-transparent border border-gray-700 text-gray-400 hover:text-white py-3.5 rounded-full text-xs font-bold mt-6 transition-colors">支付中断 / 暂不购买 (退回首页)</button>
+                <button onclick="processSubscription(false)" class="w-full bg-transparent border border-gray-700 text-gray-400 hover:text-white py-3.5 rounded-full text-xs font-bold mt-6 transition-colors">支付中断 / 暂不购买 (保留在当前页)</button>
             </div>
         </div>
 
     </div>
 
-    <!-- 交互逻辑 JS -->
     <script>
-        // 核心状态机体系
         let state = {
             balance: 0,
             episode: 0,
+            totalEpisodes: 20, 
             isAutoUnlock: true,
             isVIP: false,
             epPrice: 50,
-            
-            // 生命周期相关变量
-            hasSubscribedOffer: false,        // 是否已订阅新人优惠
-            offerExpired: false,              // 24小时倒计时是否已结束
-            offerTimerActive: false,          // 24小时倒计时是否在走（支付中断后触发）
-            bubbleDismissedThisSession: false // 用户在当前Session中是否手动叉掉了悬浮球
+            hasSubscribedOffer: false,
+            offerExpired: false,
+            offerTimerActive: false,
+            bubbleDismissedThisSession: false
         };
         let autoPlayTimer = null;
+        let countdownTimer = null;
+        let globalCountdownInterval = null;
+        let remainSeconds = 24 * 3600 - 1; // 23:59:59
 
-        // UI 元素
         const els = {
-            views: document.querySelectorAll('.app-frame > .absolute.inset-0:not(.bg-black\\/80):not(.bg-black\\/60):not(#modal-subscription)'), // 主页面
+            views: document.querySelectorAll('.app-frame > .absolute.inset-0:not(.bg-black\\/80):not(.bg-black\\/60):not(#modal-subscription):not(#drama-countdown-overlay)'),
             modals: [document.getElementById('modal-age'), document.getElementById('modal-reward'), document.getElementById('modal-manual-unlock')],
             subModal: document.getElementById('modal-subscription'),
             balUi: document.getElementById('ui-balance'),
@@ -306,16 +356,10 @@
             spinner: document.getElementById('auto-unlock-spinner'),
             bubble: document.getElementById('home-floating-bubble'),
             specialCard: document.getElementById('special-offer-card'),
-            
-            // Debug UI
-            log: document.getElementById('flow-log'),
-            dbgBal: document.getElementById('debug-balance'),
-            dbgEp: document.getElementById('debug-episode'),
-            dbgAuto: document.getElementById('debug-autounlock'),
-            dbgVip: document.getElementById('debug-vip')
+            countdownOverlay: document.getElementById('drama-countdown-overlay'),
+            log: document.getElementById('flow-log')
         };
 
-        // 写入日志
         function addLog(msg, isHighlight = false) {
             const time = new Date().toLocaleTimeString().split(' ')[0];
             const color = isHighlight ? 'text-yellow-400 font-bold' : 'text-gray-400';
@@ -323,34 +367,70 @@
             els.log.scrollTop = els.log.scrollHeight;
         }
 
-        // 更新状态 UI
+        function formatTime(sec) {
+            let h = Math.floor(sec / 3600).toString().padStart(2, '0');
+            let m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+            let s = (sec % 60).toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        // 启动全局实时倒计时
+        function startGlobalCountdown() {
+            if (globalCountdownInterval) return;
+            globalCountdownInterval = setInterval(() => {
+                remainSeconds--;
+                if (remainSeconds <= 0) {
+                    clearInterval(globalCountdownInterval);
+                    expireOfferTimer();
+                } else {
+                    const tStr = formatTime(remainSeconds);
+                    const bCtd = document.getElementById('bubble-countdown');
+                    const mCtd = document.getElementById('modal-countdown');
+                    if(bCtd) bCtd.innerText = tStr;
+                    if(mCtd) mCtd.innerText = tStr;
+                }
+            }, 1000);
+        }
+
         function updateStateUI() {
             els.balUi.innerText = state.balance;
-            els.dbgBal.innerText = state.balance;
-            els.dbgEp.innerText = state.episode > 0 ? `第 ${state.episode} 集` : '未开始';
-            els.dbgAuto.innerText = state.isAutoUnlock ? '✅ 已开启' : '❌ 已关闭';
-            els.dbgAuto.className = state.isAutoUnlock ? 'text-sm font-bold text-green-400' : 'text-sm font-bold text-red-400';
-            els.dbgVip.innerText = state.isVIP ? '👑 已订阅特惠' : '普通用户';
+            document.getElementById('debug-balance').innerText = state.balance;
+            document.getElementById('debug-episode').innerText = state.episode > 0 ? `第 ${state.episode} / ${state.totalEpisodes} 集` : '未开始';
+            document.getElementById('debug-autounlock').innerText = state.isAutoUnlock ? '✅ 已开启' : '❌ 已关闭';
+            document.getElementById('debug-autounlock').className = state.isAutoUnlock ? 'text-sm font-bold text-green-400' : 'text-sm font-bold text-red-400';
+            document.getElementById('debug-vip').innerText = state.isVIP ? '👑 已订阅特惠' : '普通用户';
             
             if(state.episode > 0) {
-                if(state.episode < 5) els.epBadge.innerText = `Episode ${state.episode} (Free)`;
+                if(state.isVIP) els.epBadge.innerText = `Episode ${state.episode} (VIP免限制)`;
+                else if(state.episode < 5) els.epBadge.innerText = `Episode ${state.episode} (Free)`;
                 else els.epBadge.innerText = `Episode ${state.episode} (Paid)`;
             }
         }
 
-        // 切换主页面
         function showView(id) {
             els.views.forEach(v => v.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
             els.modals.forEach(m => m.classList.add('hidden')); 
             els.subModal.classList.add('hidden');
+            els.countdownOverlay.classList.add('hidden');
         }
 
-        // ========================== 生命周期与联动控制核心逻辑 ========================== //
+        // ========================== 【优化 2】点击左上角返回首页 ========================== //
+        function returnToHome() {
+            clearTimeout(autoPlayTimer); 
+            addLog('-> 【操作】点击左上角 ❮ 返回，退回首页', true);
+            showView('view-home');
+            
+            if(state.episode >= 5 && !state.isVIP && state.balance < state.epPrice) {
+                if (!state.offerTimerActive) {
+                    state.offerTimerActive = true;
+                    startGlobalCountdown();
+                }
+            }
+            evaluateBubbleVisibility(); 
+        }
 
-        // 评估首页悬浮球是否应该展示
         function evaluateBubbleVisibility() {
-            // 条件：倒计时已激活 且 未订阅 且 未过期 且 本次启动没手动叉掉
             if (state.offerTimerActive && !state.hasSubscribedOffer && !state.offerExpired && !state.bubbleDismissedThisSession) {
                 els.bubble.classList.remove('hidden');
             } else {
@@ -358,9 +438,7 @@
             }
         }
 
-        // 评估支付面板内的 $0.3 特惠卡片是否应该展示
         function evaluateSpecialCardVisibility() {
-            // 任意入口调起支付页，只要未订阅且没过 24 小时，就应该展示特惠
             if (!state.hasSubscribedOffer && !state.offerExpired) {
                 els.specialCard.classList.remove('hidden');
             } else {
@@ -368,7 +446,6 @@
             }
         }
 
-        // 测试操作：悬浮球点击唤起支付面板
         function clickBubble() {
             addLog('-> 【操作】点击首页悬浮球，唤起支付弹窗', true);
             evaluateSpecialCardVisibility();
@@ -376,58 +453,127 @@
             els.subModal.classList.remove('hidden');
         }
 
-        // 测试操作：悬浮球点击 X 关闭 (单次 Session 隐藏)
         function dismissBubble(e) {
-            e.stopPropagation(); // 阻止冒泡唤起支付面板
-            state.bubbleDismissedThisSession = true; // 记录 Session 状态
+            e.stopPropagation();
+            state.bubbleDismissedThisSession = true; 
             addLog('-> 【操作】用户点击了悬浮球的 ✕ 关闭');
-            addLog('   - 悬浮球在【本次应用启动期间】不再展示', true);
             evaluateBubbleVisibility();
         }
 
-        // 调试工具：模拟杀掉进程后下次开启App (恢复 Session)
         function restartAppSession() {
-            // 重置 Session 级变量
             state.bubbleDismissedThisSession = false; 
-            
-            showView('view-home'); // 直接进首页看状态
+            showView('view-home'); 
             updateStateUI();
             addLog('======================================');
             addLog('-> 🔄 【模拟】用户杀掉进程后，重新开启 App', true);
-            
-            if (state.hasSubscribedOffer) {
-                addLog('   - 由于用户已订阅特惠，悬浮球不再展示');
-            } else if (state.offerExpired) {
-                addLog('   - 由于24小时特惠期已过，悬浮球不再展示');
-            } else if (state.offerTimerActive) {
-                addLog('   - 满足所有条件，【悬浮球恢复展示】', true);
-            } else {
-                addLog('   - 倒计时机制尚未触发，不展示');
-            }
             evaluateBubbleVisibility();
         }
 
-        // 调试工具：模拟 24 小时倒计时结束
         function expireOfferTimer() {
-            state.offerExpired = true; // 永久过期
+            state.offerExpired = true; 
             addLog('======================================');
             addLog('-> ⏩ 【模拟】24小时倒计时结束', true);
-            addLog('   - 首页悬浮球已被强制隐藏');
-            addLog('   - 支付面板内的新人特惠卡片已被隐藏');
             evaluateBubbleVisibility();
-            // 如果此时面板是开着的，实时隐藏卡片
             evaluateSpecialCardVisibility(); 
         }
 
-        // ========================== 标准流程控制 ========================== //
+        // ========================== 【优化 3】VIP 无阻断连续滚动播放 ========================== //
+        function resumeVipPlayback() {
+            addLog('-> 【VIP特权生效】已解锁全站内容，开始无阻断自动连播所有后续剧集...', true);
+            els.lockedUi.classList.add('hidden');
+            document.getElementById('btn-quick-pay').classList.add('hidden');
+            
+            function playCurrentThenNext() {
+                if (state.episode >= state.totalEpisodes) {
+                    addLog('-> 🎬 【大结局到达】', true);
+                    triggerDramaEndOverlay();
+                    return;
+                }
+                
+                updateStateUI();
+                addLog(`   - [VIP免扣费] 继续观看第 ${state.episode} 集...`);
+
+                els.progressBar.style.transition = 'none';
+                els.progressBar.style.width = '0%';
+
+                setTimeout(() => {
+                    els.progressBar.style.transition = 'width 1.2s linear';
+                    els.progressBar.style.width = '100%';
+
+                    autoPlayTimer = setTimeout(() => {
+                        if (state.episode >= state.totalEpisodes) {
+                            addLog('-> 🎬 【大结局到达】', true);
+                            triggerDramaEndOverlay();
+                        } else {
+                            state.episode++;
+                            playCurrentThenNext(); 
+                        }
+                    }, 1200);
+                }, 50);
+            }
+            playCurrentThenNext();
+        }
+
+        function triggerDramaEndOverlay() {
+            document.getElementById('player-header').classList.add('hidden');
+            document.getElementById('player-footer').classList.add('hidden');
+            els.countdownOverlay.classList.remove('hidden');
+            
+            let count = 3;
+            document.getElementById('countdown-number').innerText = count;
+            countdownTimer = setInterval(() => {
+                count--;
+                if(count <= 0) {
+                    clearInterval(countdownTimer);
+                    playNextDrama();
+                } else {
+                    document.getElementById('countdown-number').innerText = count;
+                }
+            }, 1000);
+        }
+
+        function playNextDrama() {
+            clearInterval(countdownTimer);
+            els.countdownOverlay.classList.add('hidden');
+            addLog('-> 【倒计时结束/点击Play Now】进入下一部新剧');
+            resetDemo();
+        }
+
+        function cancelCountdown() {
+            clearInterval(countdownTimer);
+            els.countdownOverlay.classList.add('hidden');
+            document.getElementById('player-header').classList.remove('hidden');
+            document.getElementById('player-footer').classList.remove('hidden');
+            addLog('-> 【点击Cancel】停留在当前最后一集');
+        }
+
+        function testDramaEnd() {
+            state.isVIP = true;
+            state.episode = state.totalEpisodes;
+            updateStateUI();
+            showView('view-player');
+            triggerDramaEndOverlay();
+            addLog('-> 🎬 【调试触发】模拟短剧完播，进入倒计时');
+        }
+
+        function testNovelEnd() {
+            state.isVIP = true;
+            updateStateUI();
+            showView('view-novel-end');
+            addLog('-> 📖 【调试触发】模拟小说看至最后一页，展示推荐书单');
+        }
 
         function resetDemo() {
             clearTimeout(autoPlayTimer);
-            state = { balance: 0, episode: 0, isAutoUnlock: true, isVIP: false, epPrice: 50, hasSubscribedOffer: false, offerExpired: false, offerTimerActive: false, bubbleDismissedThisSession: false };
+            clearInterval(countdownTimer);
+            state = { balance: 0, episode: 0, totalEpisodes: 20, isAutoUnlock: true, isVIP: false, epPrice: 50, hasSubscribedOffer: state.hasSubscribedOffer, offerExpired: false, offerTimerActive: false, bubbleDismissedThisSession: false };
             els.log.innerHTML = '';
             els.progressBar.style.width = '0%';
             els.lockedUi.classList.add('hidden');
             els.btnWatch.classList.add('hidden');
+            document.getElementById('btn-quick-pay').classList.add('hidden');
+            document.getElementById('player-header').classList.remove('hidden');
+            document.getElementById('player-footer').classList.remove('hidden');
             evaluateBubbleVisibility();
             updateStateUI();
             showView('view-splash');
@@ -438,29 +584,24 @@
             resetDemo();
             addLog('-> 【节点】启动App，进入启动页', true);
             setTimeout(() => {
-                addLog('-> 【节点】判断 IP 是否非大陆...');
                 if(simulateMainland) {
-                    addLog('   - 检测到大陆 IP');
-                    addLog('-> 【节点】进入IP过滤限制页', true);
+                    addLog('-> 【节点】检测到大陆 IP，进入拦截限制页', true);
                     showView('view-ip-block');
                 } else {
-                    addLog('   - IP 正常');
                     addLog('-> 【节点】进入年龄确认页面');
                     showView('view-player');
-                    els.modals[0].classList.remove('hidden'); // modal-age
+                    els.modals[0].classList.remove('hidden'); 
                 }
             }, 800);
         }
 
         function confirmAge(isAdult) {
             if(!isAdult) {
-                addLog('-> 【节点】用户未满18岁 -> 退出App', true);
                 showView('view-splash');
             } else {
-                addLog('-> 【节点】用户确认已满18岁');
                 els.modals[0].classList.add('hidden');
                 els.btnWatch.classList.remove('hidden');
-                addLog('-> 等待用户点击广告继续观看...');
+                addLog('-> 年龄验证通过，等待用户看剧');
             }
         }
 
@@ -468,7 +609,7 @@
             els.btnWatch.classList.add('hidden');
             addLog('-> 【节点】点击“继续观看”');
             state.episode = 1; updateStateUI();
-            addLog('   - 播放第 1 集 (免费)');
+            
             let epCounter = 1;
             const fastPlay = setInterval(() => {
                 epCounter++;
@@ -476,21 +617,10 @@
                 updateStateUI();
                 if(epCounter === 5) {
                     clearInterval(fastPlay);
-                    addLog('-> 【节点】首次进入付费集 (第5集)', true);
-                    reachPaywall();
-                } else {
-                    addLog(`   - 播放第 ${epCounter} 集 (免费)`);
+                    addLog('-> 【卡点】进入付费集 (第5集)', true);
+                    els.lockedUi.classList.remove('hidden');
+                    setTimeout(() => { els.modals[1].classList.remove('hidden'); }, 500);
                 }
-            }, 600);
-        }
-
-        function reachPaywall() {
-            addLog('-> 【节点】进入加锁状态');
-            els.lockedUi.classList.remove('hidden');
-            els.progressBar.style.width = '0%';
-            setTimeout(() => {
-                addLog('-> 【节点】弹出赠送288钻弹窗', true);
-                els.modals[1].classList.remove('hidden'); // modal-reward
             }, 500);
         }
 
@@ -500,12 +630,11 @@
             state.balance = 288;
             updateStateUI();
             els.modals[1].classList.add('hidden');
-            addLog(`-> 领取 288 钻。是否勾选自动解锁: ${isChecked ? '是' : '否'}`, true);
+            addLog(`-> 领取 288 钻。自动解锁: ${isChecked ? '开启' : '关闭'}`, true);
+            
             if(isChecked) {
-                addLog('-> 【节点】自动解锁所有集，直到余额不足');
                 processAutoUnlockLoop();
             } else {
-                addLog('-> 【节点】手动解锁当前集');
                 showManualUnlock();
             }
         }
@@ -527,7 +656,7 @@
                     }, 1000);
                 } else {
                     els.spinner.classList.add('hidden');
-                    addLog('-> 【节点】余额不足，弹出订阅弹窗', true);
+                    addLog('-> 【拦截】余额不足，弹出订阅弹窗', true);
                     triggerSubscriptionModal();
                 }
             }
@@ -536,7 +665,7 @@
 
         function showManualUnlock() {
             document.getElementById('manual-ep-num').innerText = state.episode;
-            els.modals[2].classList.remove('hidden'); // modal-manual-unlock
+            els.modals[2].classList.remove('hidden');
         }
 
         function manualUnlock() {
@@ -544,7 +673,7 @@
                 state.balance -= state.epPrice;
                 updateStateUI();
                 els.modals[2].classList.add('hidden');
-                addLog(`   - 手动扣除50钻。剩余 ${state.balance} 钻。`);
+                addLog(`   - 手动扣除50钻。剩余 ${state.balance} 钻。开始播放`);
                 els.progressBar.style.transition = 'width 1s linear';
                 els.progressBar.style.width = '100%';
                 autoPlayTimer = setTimeout(() => {
@@ -552,41 +681,48 @@
                     els.progressBar.style.width = '0%';
                     state.episode++;
                     updateStateUI();
-                    showManualUnlock();
+                    showManualUnlock(); 
                 }, 1000);
             } else {
                 els.modals[2].classList.add('hidden');
-                addLog('-> 【节点】余额不足，弹出订阅弹窗', true);
+                addLog('-> 【拦截】多次解锁后余额不足', true);
                 triggerSubscriptionModal();
             }
         }
 
-        // 通过各种入口触发订阅支付面板（包含特惠校验）
         function triggerSubscriptionModal() {
             addLog('-> 唤起统一支付/订阅面板');
             document.getElementById('sub-balance').innerText = state.balance;
-            evaluateSpecialCardVisibility(); // 核心：判断当前是否显示 $0.3 卡片
+            evaluateSpecialCardVisibility(); 
             els.subModal.classList.remove('hidden');
+            
+            if (!state.offerTimerActive) {
+                state.offerTimerActive = true;
+                startGlobalCountdown();
+            }
         }
 
-        // 处理支付面板返回结果
         function processSubscription(isSuccess) {
             els.subModal.classList.add('hidden');
             
             if(isSuccess) {
                 addLog('-> 【操作】完成支付 (订阅新人专享优惠)', true);
                 state.isVIP = true;
-                state.hasSubscribedOffer = true; // 记录已订阅特惠
+                state.hasSubscribedOffer = true; 
                 updateStateUI();
-                evaluateBubbleVisibility(); // 支付成功后立即校验隐藏悬浮球
-                els.lockedUi.classList.add('hidden');
-                addLog('-> ✅ 订阅成功。新人专享优惠已从所有入口永久隐藏。');
+                evaluateBubbleVisibility(); 
+                
+                // 【优化 3】无阻断观看所有后续集
+                resumeVipPlayback(); 
+                
             } else {
-                addLog('-> 【操作】支付中断，退回首页', true);
-                state.offerTimerActive = true; // 支付中断，正式激活 24 小时倒计时逻辑
-                showView('view-home');
-                evaluateBubbleVisibility(); // 显示首页悬浮球
-                addLog('-> 【节点】专享订阅优惠支持显示 24小时 (启动首页悬浮球)', true);
+                // 【优化 1】中断支付留在加锁页面，显示加锁状态
+                addLog('-> 【操作】支付中断，暂不购买。停留在当前加锁页面', true);
+                state.offerTimerActive = true; 
+                startGlobalCountdown(); 
+                els.lockedUi.classList.remove('hidden');
+                document.getElementById('btn-quick-pay').classList.remove('hidden'); // 显示重新唤起支付的按钮
+                evaluateBubbleVisibility(); 
             }
         }
 
